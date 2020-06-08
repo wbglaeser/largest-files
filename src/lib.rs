@@ -24,20 +24,21 @@ pub struct FileList ( pub Vec<FileEntry> );
 impl FileList {
     pub fn update(&mut self, new_file: FileEntry) {
 
-        let mut idx_ = 0;
+        let mut idx_ = self.0.len();
 
         // all subsequent entries
         if self.0.len() != 0 {
             for ( idx, entry ) in self.0.iter().enumerate() {
-                if new_file.file_size < entry.file_size {
+                if new_file.file_size >= entry.file_size {
                     idx_ = idx;
-                } else { break }    
+                    break;
+                }    
             }
         }
 
         // insert
         self.0.insert(idx_, new_file);
-
+        
         // remove if too long
         if self.0.len() > 100 {
             let _drop = self.0.pop();
@@ -48,7 +49,7 @@ impl FileList {
 
 impl fmt::Display for FileList {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "\n{}\n{}\n{}\n", self.0.get(0).unwrap(), self.0.get(1).unwrap(), self.0.get(2).unwrap())
+        write!(f, "\n{}{}{}{}{}\n", self.0.get(0).unwrap(), self.0.get(1).unwrap(), self.0.get(2).unwrap(), self.0.get(3).unwrap(), self.0.get(5).unwrap())
     }
 }
 
@@ -100,7 +101,7 @@ impl fmt::Display for FileEntry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let modified_date: DateTime<Local> = DateTime::from(self.modified_at);
         let created_date: DateTime<Local> = DateTime::from(self.created_at);
-        write!(f, "\nSize: {:.2}MB\nFilename: {:?}\nFull path: {:?}\nModified: {:?}\nCreated: {:?}\nDirectory: {:?}\n", self.file_size, self.file_name, self.full_path, modified_date, created_date, self.is_directory)
+        write!(f, "\nSize: {:.4}MB\nFilename: {:?}\nFull path: {:?}\nModified: {:?}\nCreated: {:?}\n", self.file_size, self.file_name, self.full_path, modified_date, created_date)
     }
 }
 
