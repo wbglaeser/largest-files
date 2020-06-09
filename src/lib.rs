@@ -40,7 +40,7 @@ impl FileList {
         self.0.insert(idx_, new_file);
         
         // remove if too long
-        if self.0.len() > 100 {
+        if self.0.len() > 100_000 {
             let _drop = self.0.pop();
         }
 
