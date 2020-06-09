@@ -1,5 +1,7 @@
+use std::io::Write;
+use std::io;
 use std::fs;
-use std::time::SystemTime;
+use std::time::{SystemTime, Duration};
 use chrono::{Local, DateTime};
 use std::path::PathBuf;
 use std::ffi::OsString;
@@ -17,6 +19,39 @@ pub struct Cli {
 
     #[structopt(short = "f")]
     pub faulty_files: bool,
+}
+
+pub struct ProgressTracker {
+    current_time: SystemTime,
+    idx: usize,
+    symbols: Vec<String>,
+}
+
+impl ProgressTracker {
+    pub fn initialise() -> Self {
+        Self {
+            current_time: SystemTime::now(),
+            idx: 0,
+            symbols: vec![String::from("-"), String::from("\\"), String::from("|"),String::from("/"), String::from("-"), String::from("\\"), String::from("|"), String::from("/")],
+        }
+    }
+
+    pub fn progress(&mut self) {
+        let now = SystemTime::now();
+        let duration = Duration::from_millis(100);
+
+        if now.duration_since(self.current_time).unwrap() > duration {
+            
+            let current_symbol = self.idx % 8;
+            
+            print!("\x1B[2J\x1B[1;1H");
+            print!("Scanning directories {}", self.symbols.get(current_symbol).unwrap());
+            let _drop = io::stdout().flush();
+
+            self.idx = self.idx + 1;
+            self.current_time = now;
+        }
+    }
 }
 
 pub struct FileList ( pub Vec<FileEntry> );
@@ -105,8 +140,10 @@ impl fmt::Display for FileEntry {
     }
 }
 
-pub fn parse_dir(dir_path: PathBuf, mut file_list: &mut FileList, exclude: &String, faulty: bool) {
-    
+pub fn parse_dir(dir_path: PathBuf, mut file_list: &mut FileList, exclude: &String, faulty: bool, tracker: &mut ProgressTracker ) {
+   
+    tracker.progress();
+
     if let Ok(dir_list) = fs::read_dir(dir_path) {
         
         for p in dir_list {
@@ -121,7 +158,7 @@ pub fn parse_dir(dir_path: PathBuf, mut file_list: &mut FileList, exclude: &Stri
 
                     // if file is dir we want to jump in a little deeper
                     if metadata.is_dir() == true {
-                        parse_dir(path.path(), &mut file_list, exclude, faulty);
+                        parse_dir(path.path(), &mut file_list, exclude, faulty, tracker);
                     }
         
                     // if file is dir we can skip here
