@@ -8,6 +8,9 @@ use std::ffi::OsString;
 use std::fs::DirEntry;
 use std::fmt;
 use structopt::StructOpt;
+use std::error::Error;
+use csv::Writer;
+use serde::Serialize;
 
 #[derive(StructOpt, Debug)]
 pub struct Cli {
@@ -19,6 +22,38 @@ pub struct Cli {
 
     #[structopt(short = "f")]
     pub faulty_files: bool,
+}
+
+#[derive(Serialize)]
+struct Row<'a> {
+    file_size: f64,
+    file_name: &'a str,
+    full_path: &'a str,
+    created_at: &'a str,
+    modified_at: &'a str,
+}
+
+pub fn store_results(file_list: &FileList) -> Result<(), Box<dyn Error>> {
+    
+    // initialise writer
+    let mut wtr = Writer::from_path("foo.csv")?;
+
+    for file in file_list.0.iter() {
+       
+        let created_at: DateTime<Local> = DateTime::from(file.created_at);
+        let modified_at: DateTime<Local> = DateTime::from(file.modified_at);
+
+        wtr.serialize(Row{
+           file_size: file.file_size,
+           file_name: file.file_name.to_str().unwrap(),
+           full_path: file.full_path.to_str().unwrap(),
+           created_at: &created_at.to_rfc2822(),
+           modified_at: &modified_at.to_rfc2822(),
+        })?;
+    }
+    wtr.flush()?;
+    //let _data = String::from_utf8(wtr.into_inner()?)?;
+    Ok(())
 }
 
 pub struct ProgressTracker {
@@ -41,13 +76,13 @@ impl ProgressTracker {
 
     pub fn progress(&mut self) {
         let now = SystemTime::now();
-        let duration = Duration::from_millis(100);
+        let duration = Duration::from_millis(150);
 
         if now.duration_since(self.current_time).unwrap() > duration {
             
             let current_symbol = self.idx % 8;
             
-            print!("\rScanning directories {}", self.symbols.get(current_symbol).unwrap());
+            print!("\rScanning directories {} ", self.symbols.get(current_symbol).unwrap());
             let _drop = io::stdout().flush();
 
             self.idx = self.idx + 1;
@@ -144,12 +179,12 @@ impl fmt::Display for FileEntry {
 
 pub fn parse_dir(dir_path: PathBuf, mut file_list: &mut FileList, exclude: &String, faulty: bool, tracker: &mut ProgressTracker ) {
    
-    tracker.progress();
-
     if let Ok(dir_list) = fs::read_dir(dir_path) {
         
         for p in dir_list {
-        
+         
+            tracker.progress();
+            
             if let Ok(path) = p {
 
                 if path.file_name().into_string().unwrap().contains(exclude) {

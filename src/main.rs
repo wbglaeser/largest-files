@@ -1,5 +1,5 @@
 use structopt::StructOpt;
-use largest_files::{parse_dir, Cli, FileList, ProgressTracker};
+use largest_files::*;
 
 fn main() {
    
@@ -12,6 +12,9 @@ fn main() {
 
     // recursively scan directories
     parse_dir(args.path, &mut file_list, &args.exclude, args.faulty_files, &mut tracker);
+
+    // store results to csv
+    let _drop = store_results(&file_list);
 
     // print latest file
     println!("{}", file_list);
