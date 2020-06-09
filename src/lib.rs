@@ -29,6 +29,9 @@ pub struct ProgressTracker {
 
 impl ProgressTracker {
     pub fn initialise() -> Self {
+        
+        print!("\x1B[2J\x1B[1;1H");
+        
         Self {
             current_time: SystemTime::now(),
             idx: 0,
@@ -44,8 +47,7 @@ impl ProgressTracker {
             
             let current_symbol = self.idx % 8;
             
-            print!("\x1B[2J\x1B[1;1H");
-            print!("Scanning directories {}", self.symbols.get(current_symbol).unwrap());
+            print!("\rScanning directories {}", self.symbols.get(current_symbol).unwrap());
             let _drop = io::stdout().flush();
 
             self.idx = self.idx + 1;
