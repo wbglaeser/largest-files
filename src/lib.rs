@@ -22,6 +22,9 @@ pub struct Cli {
 
     #[structopt(short = "f")]
     pub faulty_files: bool,
+
+    #[structopt(short = "s")]
+    pub store_list: bool,
 }
 
 #[derive(Serialize)]
@@ -205,12 +208,13 @@ pub fn parse_dir(dir_path: PathBuf, mut file_list: &mut FileList, exclude: &Stri
                     let new_file = FileEntry::parse(&path);
                     file_list.update(new_file);
                 
-                } else { 
+                } 
+                else { 
                     if faulty {
                         println!("Faulty file: {:?}", path.path()); 
                     }
                 }
-            } else { println!("Faulty file"); }
+            }
         }
-    } else { println!("Faulty file"); }
+    }
 }
